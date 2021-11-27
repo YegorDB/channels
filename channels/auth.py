@@ -161,13 +161,15 @@ class AuthMiddleware(BaseMiddleware):
     Requires SessionMiddleware to function.
     """
 
-    def populate_scope(self, scope):
+    def check_scope(self, scope):
         # Make sure we have a session
         if "session" not in scope:
             raise ValueError(
                 "AuthMiddleware cannot find session in scope. "
                 "SessionMiddleware must be above it."
             )
+
+    def populate_scope(self, scope):
         # Add it to the scope if it's not there already
         if "user" not in scope:
             scope["user"] = UserLazyObject()
@@ -177,6 +179,8 @@ class AuthMiddleware(BaseMiddleware):
 
     async def __call__(self, scope, receive, send):
         scope = dict(scope)
+        # Scope state verification
+        self.check_scope(scope)
         # Scope injection/mutation per this middleware's needs.
         self.populate_scope(scope)
         # Grab the finalized/resolved scope
